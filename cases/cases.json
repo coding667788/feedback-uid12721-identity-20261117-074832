@@ -1,0 +1,960 @@
+{
+  "seed": 20261117,
+  "start_time": 1000000,
+  "cases": [
+    {
+      "name": "01_happy_path_slow_terminal",
+      "db": "runtime/01.db",
+      "log": "runtime/01.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "hash_file",
+          "path": "sample_notes.txt",
+          "expect": {
+            "sha256": "5445d6c9e52a449549a4aff6ae62f8e2fd2824698a86db5defb59604fced1393"
+          },
+          "save": "notes_hash_step"
+        },
+        {
+          "op": "hash_file",
+          "path": "sample_blob.bin",
+          "expect": {
+            "sha256": "94eb5de4943613fd048dc93393ab06877405faa39c11f53e9386083339833e7e"
+          },
+          "save": "blob_hash_step"
+        },
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-1",
+            "scope": "read data",
+            "ttl": 300
+          },
+          "save": "reg",
+          "expect": {
+            "result": "registered",
+            "status": "pending",
+            "interval": 5,
+            "ttl": 300,
+            "expires_at": 1000300
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-1",
+            "scope": "read data"
+          },
+          "save": "p1",
+          "expect": {
+            "error": "authorization_pending",
+            "interval": 5
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 5
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-1",
+            "scope": "read data"
+          },
+          "save": "p2",
+          "expect": {
+            "error": "authorization_pending",
+            "interval": 5
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 20
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice",
+            "decision": "approve"
+          },
+          "expect": {
+            "result": "approved",
+            "status": "approved",
+            "client_id": "term-client-1",
+            "scope": "data read"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-1",
+            "scope": "read data",
+            "request_id": "req-001"
+          },
+          "save": "issued",
+          "expect": {
+            "result": "issued",
+            "status": "consumed",
+            "request_id": "req-001",
+            "token_type": "Bearer"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-1",
+            "scope": "read data",
+            "request_id": "req-001"
+          },
+          "save": "replay",
+          "expect": {
+            "result": "replay",
+            "status": "consumed",
+            "request_id": "req-001"
+          }
+        },
+        {
+          "op": "assert_log_no_secrets",
+          "secrets": [
+            "$reg.device_code",
+            "$issued.token",
+            "$reg.user_code"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_deny_and_terminal_states",
+      "db": "runtime/02.db",
+      "log": "runtime/02.log",
+      "accounts": [
+        "bob"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-2",
+            "scope": "read",
+            "ttl": 120
+          },
+          "save": "reg",
+          "expect": {
+            "status": "pending",
+            "interval": 5
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 30
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "bob",
+            "user_code": "$reg.user_code",
+            "account_id": "bob",
+            "decision": "deny"
+          },
+          "expect": {
+            "result": "denied",
+            "status": "denied"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-2",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "access_denied"
+          }
+        },
+        {
+          "op": "cancel",
+          "args": {
+            "device_code": "$reg.device_code"
+          },
+          "expect": {
+            "error": "conflict_state",
+            "current_status": "denied"
+          }
+        },
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-2b",
+            "scope": "read",
+            "ttl": 120
+          },
+          "save": "reg2"
+        },
+        {
+          "op": "cancel",
+          "args": {
+            "device_code": "$reg2.device_code"
+          },
+          "expect": {
+            "result": "cancelled",
+            "status": "cancelled"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg2.device_code",
+            "client_id": "term-client-2b",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "grant_cancelled"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "not-a-real-device-code",
+            "client_id": "term-client-2b",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "invalid_grant"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03_binding_enforcement",
+      "db": "runtime/03.db",
+      "log": "runtime/03.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-3",
+            "scope": "read",
+            "ttl": 300
+          },
+          "save": "reg"
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "result": "approved"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "attacker-client",
+            "scope": "read",
+            "request_id": "req-bad-client"
+          },
+          "expect": {
+            "error": "invalid_client"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read write admin",
+            "request_id": "req-bad-scope"
+          },
+          "expect": {
+            "error": "invalid_scope"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "request_id_required"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read",
+            "request_id": "req-ok"
+          },
+          "save": "issued",
+          "expect": {
+            "result": "issued",
+            "status": "consumed"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read",
+            "request_id": "req-other"
+          },
+          "expect": {
+            "error": "grant_consumed"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read",
+            "request_id": "req-ok"
+          },
+          "expect": {
+            "result": "replay",
+            "token": "$issued.token"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-3",
+            "scope": "read",
+            "request_id": "req-ok-x"
+          },
+          "expect": {
+            "error": "grant_consumed"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04_expiry_boundary",
+      "db": "runtime/04.db",
+      "log": "runtime/04.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-4",
+            "scope": "read",
+            "ttl": 60
+          },
+          "save": "reg",
+          "expect": {
+            "expires_at": 1000060
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 59
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "result": "approved"
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 2
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-4",
+            "scope": "read",
+            "request_id": "req-after-expiry"
+          },
+          "expect": {
+            "result": "issued"
+          }
+        },
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-4b",
+            "scope": "read",
+            "ttl": 30
+          },
+          "save": "reg2",
+          "expect": {
+            "expires_at": 1000091
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 30
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg2.device_code",
+            "client_id": "term-client-4b",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "grant_expired"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg2.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "grant_expired"
+          }
+        },
+        {
+          "op": "cancel",
+          "args": {
+            "device_code": "$reg2.device_code"
+          },
+          "expect": {
+            "error": "grant_expired"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05_slowdown_upgrade_survives_restart",
+      "db": "runtime/05.db",
+      "log": "runtime/05.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-5",
+            "scope": "read",
+            "ttl": 600
+          },
+          "save": "reg",
+          "expect": {
+            "interval": 5
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-5",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "authorization_pending",
+            "interval": 5
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 2
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-5",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "slow_down",
+            "interval": 10,
+            "retry_after": 10
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 9
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-5",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "slow_down",
+            "interval": 15,
+            "retry_after": 15
+          }
+        },
+        {
+          "op": "restart"
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-5",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "slow_down",
+            "interval": 20,
+            "retry_after": 20
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 100
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "result": "approved"
+          }
+        },
+        {
+          "op": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-5",
+            "scope": "read",
+            "request_id": "req-restart-ok"
+          },
+          "expect": {
+            "result": "issued"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06_approve_cancel_interleave_race",
+      "db": "runtime/06.db",
+      "log": "runtime/06.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-6",
+            "scope": "read",
+            "ttl": 300
+          },
+          "save": "reg"
+        },
+        {
+          "op": "thread_race",
+          "calls": [
+            {
+              "op": "approve",
+              "args": {
+                "caller_id": "alice",
+                "user_code": "$reg.user_code",
+                "account_id": "alice"
+              }
+            },
+            {
+              "op": "cancel",
+              "args": {
+                "device_code": "$reg.device_code"
+              }
+            }
+          ],
+          "save": "race",
+          "expect": {
+            "final_status": "__one_of:approved:cancelled__",
+            "terminal": true
+          }
+        },
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-6b",
+            "scope": "read",
+            "ttl": 300
+          },
+          "save": "reg2"
+        },
+        {
+          "op": "cancel",
+          "args": {
+            "device_code": "$reg2.device_code"
+          },
+          "expect": {
+            "result": "cancelled"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg2.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "cancel",
+          "args": {
+            "device_code": "$reg2.device_code"
+          },
+          "expect": {
+            "result": "cancelled",
+            "status": "cancelled"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07_user_code_bruteforce_rate_limit",
+      "db": "runtime/07.db",
+      "log": "runtime/07.log",
+      "accounts": [
+        "alice",
+        "bob"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-7",
+            "scope": "read",
+            "ttl": 600
+          },
+          "save": "reg"
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "ZZZZ-ZZZZ",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "$reg.user_code",
+            "account_id": "ghost"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "2345-6789",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 10
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "AAAA-BBBB",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "CCCC-DDDD",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "save": "blocked",
+          "expect": {
+            "error": "rate_limited"
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 30
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "rate_limited"
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 21
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "result": "approved",
+            "status": "approved"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "other-caller",
+            "user_code": "HHHH-HHHH",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "restart"
+        },
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-7b",
+            "scope": "read",
+            "ttl": 600
+          },
+          "save": "reg2"
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "JJJJ-JJJJ",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "KKKK-KKKK",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "MMMM-MMMM",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "invalid_user_code"
+          }
+        },
+        {
+          "op": "approve",
+          "args": {
+            "caller_id": "mallory",
+            "user_code": "LLLL-LLLL",
+            "account_id": "alice"
+          },
+          "expect": {
+            "error": "rate_limited"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08_two_independent_poller_processes",
+      "db": "runtime/08.db",
+      "log": "runtime/08.log",
+      "accounts": [
+        "alice"
+      ],
+      "steps": [
+        {
+          "op": "register",
+          "args": {
+            "client_id": "term-client-8",
+            "scope": "read",
+            "ttl": 600
+          },
+          "save": "reg",
+          "expect": {
+            "status": "pending"
+          }
+        },
+        {
+          "op": "worker",
+          "db": "runtime/08.db",
+          "log": "runtime/08.log",
+          "action": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-8",
+            "scope": "read"
+          },
+          "expect": {
+            "error": "authorization_pending",
+            "exit_code": 2
+          }
+        },
+        {
+          "op": "advance",
+          "seconds": 30
+        },
+        {
+          "op": "worker",
+          "db": "runtime/08.db",
+          "log": "runtime/08.log",
+          "action": "approve",
+          "args": {
+            "caller_id": "alice",
+            "user_code": "$reg.user_code",
+            "account_id": "alice"
+          },
+          "expect": {
+            "result": "approved",
+            "exit_code": 0
+          }
+        },
+        {
+          "op": "worker",
+          "db": "runtime/08.db",
+          "log": "runtime/08.log",
+          "action": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-8",
+            "scope": "read",
+            "request_id": "req-proc-A"
+          },
+          "save": "proc_a",
+          "expect": {
+            "result": "issued",
+            "exit_code": 0
+          }
+        },
+        {
+          "op": "worker",
+          "db": "runtime/08.db",
+          "log": "runtime/08.log",
+          "action": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-8",
+            "scope": "read",
+            "request_id": "req-proc-B"
+          },
+          "expect": {
+            "error": "grant_consumed",
+            "exit_code": 2
+          }
+        },
+        {
+          "op": "worker",
+          "db": "runtime/08.db",
+          "log": "runtime/08.log",
+          "action": "poll",
+          "args": {
+            "device_code": "$reg.device_code",
+            "client_id": "term-client-8",
+            "scope": "read",
+            "request_id": "req-proc-A"
+          },
+          "expect": {
+            "result": "replay",
+            "exit_code": 0,
+            "token": "$proc_a.token"
+          }
+        },
+        {
+          "op": "assert_log_no_secrets",
+          "secrets": [
+            "$reg.device_code",
+            "$proc_a.token"
+          ]
+        }
+      ]
+    }
+  ]
+}

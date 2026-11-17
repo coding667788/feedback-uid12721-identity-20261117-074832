@@ -1,0 +1,1012 @@
+{
+  "cases": [
+    {
+      "db": "runtime\\01.db",
+      "failures": [],
+      "log": "runtime\\01.log",
+      "name": "01_happy_path_slow_terminal",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "sha256": "5445d6c9e52a449549a4aff6ae62f8e2fd2824698a86db5defb59604fced1393"
+          },
+          "index": 0,
+          "op": "hash_file",
+          "passed": true
+        },
+        {
+          "actual": {
+            "sha256": "94eb5de4943613fd048dc93393ab06877405faa39c11f53e9386083339833e7e"
+          },
+          "index": 1,
+          "op": "hash_file",
+          "passed": true
+        },
+        {
+          "actual": {
+            "device_code": "2yUG-DszN1dMN1h3DwLkvlpLSHu0HuuCu2Z4LCBNqKo",
+            "expires_at": 1000300,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 300,
+            "user_code": "KMXZ-KY6N"
+          },
+          "index": 2,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "authorization_pending",
+            "error_description": "申请尚未被用户处理",
+            "interval": 5
+          },
+          "index": 3,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000005
+          },
+          "index": 4,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "authorization_pending",
+            "error_description": "申请尚未被用户处理",
+            "interval": 5
+          },
+          "index": 5,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000025
+          },
+          "index": 6,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-1",
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "data read",
+            "status": "approved"
+          },
+          "index": 7,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-1",
+            "issued_at": 1000025,
+            "request_id": "req-001",
+            "result": "issued",
+            "scope": "data read",
+            "status": "consumed",
+            "token": "lat_6reCo_-nHqqC5GrrJffB5wcRureMzm_MotQLIU9a-ZM",
+            "token_type": "Bearer"
+          },
+          "index": 8,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-1",
+            "issued_at": 1000025,
+            "request_id": "req-001",
+            "result": "replay",
+            "scope": "data read",
+            "status": "consumed",
+            "token": "lat_6reCo_-nHqqC5GrrJffB5wcRureMzm_MotQLIU9a-ZM",
+            "token_type": "Bearer"
+          },
+          "index": 9,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "checked": true,
+            "leaks": 0
+          },
+          "index": 10,
+          "op": "assert_log_no_secrets",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\02.db",
+      "failures": [],
+      "log": "runtime\\02.log",
+      "name": "02_deny_and_terminal_states",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "5qfUNFcTC8AEOWFQfrRssyo3rd8AOv2LDV4BNUZbvhg",
+            "expires_at": 1000120,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 120,
+            "user_code": "MZYJ-8E68"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000030
+          },
+          "index": 1,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "bob",
+            "grant_id": 1,
+            "result": "denied",
+            "status": "denied"
+          },
+          "index": 2,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "access_denied",
+            "error_description": "用户拒绝了该申请"
+          },
+          "index": 3,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "current_status": "denied",
+            "error": "conflict_state",
+            "error_description": "申请已处于终态，无法取消"
+          },
+          "index": 4,
+          "op": "cancel",
+          "passed": true
+        },
+        {
+          "actual": {
+            "device_code": "lTsbfm03Ddvmdy760fWPQe2fJ9Zm3GDGuFsOELjlS1c",
+            "expires_at": 1000150,
+            "grant_id": 2,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 120,
+            "user_code": "NXQN-EPQ6"
+          },
+          "index": 5,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "grant_id": 2,
+            "result": "cancelled",
+            "status": "cancelled"
+          },
+          "index": 6,
+          "op": "cancel",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_cancelled",
+            "error_description": "申请已被取消"
+          },
+          "index": 7,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_grant",
+            "error_description": "device_code 查无对应申请"
+          },
+          "index": 8,
+          "op": "poll",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\03.db",
+      "failures": [],
+      "log": "runtime\\03.log",
+      "name": "03_binding_enforcement",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "y3u0hLbFnDf58tgFQZD-sXFc3A5Gmwytqi65SAebfIE",
+            "expires_at": 1000300,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 300,
+            "user_code": "CBUK-K832"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-3",
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "read",
+            "status": "approved"
+          },
+          "index": 1,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_client",
+            "error_description": "client_id 与申请绑定不一致"
+          },
+          "index": 2,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_scope",
+            "error_description": "scope 与批准时绑定的范围不一致，不得扩大或变更"
+          },
+          "index": 3,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "request_id_required",
+            "error_description": "兑换必须携带客户端预先声明的 request_id"
+          },
+          "index": 4,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-3",
+            "issued_at": 1000000,
+            "request_id": "req-ok",
+            "result": "issued",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_JDrLZ61z4rAZwPPqEvpTHC8tn5Sfhra6BP1zPi59-j0",
+            "token_type": "Bearer"
+          },
+          "index": 5,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_consumed",
+            "error_description": "该申请已被其他 request_id 兑换，不能再次消费"
+          },
+          "index": 6,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-3",
+            "issued_at": 1000000,
+            "request_id": "req-ok",
+            "result": "replay",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_JDrLZ61z4rAZwPPqEvpTHC8tn5Sfhra6BP1zPi59-j0",
+            "token_type": "Bearer"
+          },
+          "index": 7,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_consumed",
+            "error_description": "该申请已被其他 request_id 兑换，不能再次消费"
+          },
+          "index": 8,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 9,
+          "op": "approve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\04.db",
+      "failures": [],
+      "log": "runtime\\04.log",
+      "name": "04_expiry_boundary",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "cZWEYku4NrYjahvs9Wwi3CBPN-V3XtpUKJWojEwWTA0",
+            "expires_at": 1000060,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 60,
+            "user_code": "5RDM-YUED"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000059
+          },
+          "index": 1,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-4",
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "read",
+            "status": "approved"
+          },
+          "index": 2,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000061
+          },
+          "index": 3,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-4",
+            "issued_at": 1000061,
+            "request_id": "req-after-expiry",
+            "result": "issued",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_f3jenEg3WeK9KQM-0_PNF0Rg7XTZecgk3w-U0hte98U",
+            "token_type": "Bearer"
+          },
+          "index": 4,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "device_code": "UGCwXV4DxoyWPVo6bn4NumteC5zehYZQ1Hp1evxiRWc",
+            "expires_at": 1000091,
+            "grant_id": 2,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 30,
+            "user_code": "PD2S-MSG3"
+          },
+          "index": 5,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000091
+          },
+          "index": 6,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_expired",
+            "error_description": "申请已到期"
+          },
+          "index": 7,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_expired",
+            "error_description": "申请已到期，无法批准"
+          },
+          "index": 8,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_expired",
+            "error_description": "申请已到期"
+          },
+          "index": 9,
+          "op": "cancel",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\05.db",
+      "failures": [],
+      "log": "runtime\\05.log",
+      "name": "05_slowdown_upgrade_survives_restart",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "8IYsR1nKmxVWEgH1LilcWSsqmF1kWVia5h0-aOsTeBQ",
+            "expires_at": 1000600,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 600,
+            "user_code": "C649-Q8D2"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "authorization_pending",
+            "error_description": "申请尚未被用户处理",
+            "interval": 5
+          },
+          "index": 1,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000002
+          },
+          "index": 2,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "slow_down",
+            "error_description": "轮询过快，最小间隔已永久增加 5 秒",
+            "interval": 10,
+            "retry_after": 10
+          },
+          "index": 3,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000011
+          },
+          "index": 4,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "slow_down",
+            "error_description": "轮询过快，最小间隔已永久增加 5 秒",
+            "interval": 15,
+            "retry_after": 15
+          },
+          "index": 5,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000011,
+            "restarted": true
+          },
+          "index": 6,
+          "op": "restart",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "slow_down",
+            "error_description": "轮询过快，最小间隔已永久增加 5 秒",
+            "interval": 20,
+            "retry_after": 20
+          },
+          "index": 7,
+          "op": "poll",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000111
+          },
+          "index": 8,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-5",
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "read",
+            "status": "approved"
+          },
+          "index": 9,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-5",
+            "issued_at": 1000111,
+            "request_id": "req-restart-ok",
+            "result": "issued",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_9ccuDUfjDuhkJTesVmMQiYGqZaM4wYekybPajhYqnDE",
+            "token_type": "Bearer"
+          },
+          "index": 10,
+          "op": "poll",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\06.db",
+      "failures": [],
+      "log": "runtime\\06.log",
+      "name": "06_approve_cancel_interleave_race",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "-ZGBPKBiq50JD6BjzQQrb3-3fjqhXExmh0LwsbTOhHg",
+            "expires_at": 1000300,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 300,
+            "user_code": "YBC6-WXET"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "final_status": "approved",
+            "outcomes": [
+              {
+                "ok": true,
+                "result": {
+                  "account_id": "alice",
+                  "client_id": "term-client-6",
+                  "grant_id": 1,
+                  "result": "approved",
+                  "scope": "read",
+                  "status": "approved"
+                }
+              },
+              {
+                "error": {
+                  "current_status": "approved",
+                  "error": "conflict_state",
+                  "error_description": "申请已处于终态，无法取消"
+                },
+                "ok": false
+              }
+            ],
+            "terminal": true
+          },
+          "index": 1,
+          "op": "thread_race",
+          "passed": true
+        },
+        {
+          "actual": {
+            "device_code": "hPBemrH2b5k5xaKNR5U483_aNsSbZ0OrDxlzwVh1Ly4",
+            "expires_at": 1000300,
+            "grant_id": 2,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 300,
+            "user_code": "KBTQ-YEA7"
+          },
+          "index": 2,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "grant_id": 2,
+            "result": "cancelled",
+            "status": "cancelled"
+          },
+          "index": 3,
+          "op": "cancel",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 4,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "grant_id": 2,
+            "result": "cancelled",
+            "status": "cancelled"
+          },
+          "index": 5,
+          "op": "cancel",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\07.db",
+      "failures": [],
+      "log": "runtime\\07.log",
+      "name": "07_user_code_bruteforce_rate_limit",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "wZPl9qd-KCzQjxaK2mBjvC8Hp_oSGWynRbocrM0NSFc",
+            "expires_at": 1000600,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 600,
+            "user_code": "GQC3-Z3TA"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 1,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 2,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 3,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000010
+          },
+          "index": 4,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 5,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 6,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "rate_limited",
+            "error_description": "短码尝试失败过多，请稍后再试",
+            "retry_after": 50
+          },
+          "index": 7,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000040
+          },
+          "index": 8,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "rate_limited",
+            "error_description": "短码尝试失败过多，请稍后再试",
+            "retry_after": 20
+          },
+          "index": 9,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000061
+          },
+          "index": 10,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-7",
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "read",
+            "status": "approved"
+          },
+          "index": 11,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 12,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000061,
+            "restarted": true
+          },
+          "index": 13,
+          "op": "restart",
+          "passed": true
+        },
+        {
+          "actual": {
+            "device_code": "DHjS3cGQ-zwy1OS5epYdu6NSzGhnhF7_4pWm4WtkuQw",
+            "expires_at": 1000661,
+            "grant_id": 2,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 600,
+            "user_code": "KJVP-JABB"
+          },
+          "index": 14,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 15,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 16,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "invalid_user_code",
+            "error_description": "短码无效或没有待批准的申请"
+          },
+          "index": 17,
+          "op": "approve",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "rate_limited",
+            "error_description": "短码尝试失败过多，请稍后再试",
+            "retry_after": 9
+          },
+          "index": 18,
+          "op": "approve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "db": "runtime\\08.db",
+      "failures": [],
+      "log": "runtime\\08.log",
+      "name": "08_two_independent_poller_processes",
+      "passed": true,
+      "steps": [
+        {
+          "actual": {
+            "device_code": "0iys8wALrMux_CPgm3d98SnCcGzG1pE_E8y5AJWP4g4",
+            "expires_at": 1000600,
+            "grant_id": 1,
+            "interval": 5,
+            "result": "registered",
+            "status": "pending",
+            "ttl": 600,
+            "user_code": "Z6PG-BX2T"
+          },
+          "index": 0,
+          "op": "register",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "authorization_pending",
+            "error_description": "申请尚未被用户处理",
+            "exit_code": 2,
+            "interval": 5
+          },
+          "index": 1,
+          "op": "worker",
+          "passed": true
+        },
+        {
+          "actual": {
+            "now": 1000030
+          },
+          "index": 2,
+          "op": "advance",
+          "passed": true
+        },
+        {
+          "actual": {
+            "account_id": "alice",
+            "client_id": "term-client-8",
+            "exit_code": 0,
+            "grant_id": 1,
+            "result": "approved",
+            "scope": "read",
+            "status": "approved"
+          },
+          "index": 3,
+          "op": "worker",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-8",
+            "exit_code": 0,
+            "issued_at": 1000030,
+            "request_id": "req-proc-A",
+            "result": "issued",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_TS2GXv5sbS0Hz9cYl3LIYo8Y8HcBG6ntOdggPjBnuq0",
+            "token_type": "Bearer"
+          },
+          "index": 4,
+          "op": "worker",
+          "passed": true
+        },
+        {
+          "actual": {
+            "error": "grant_consumed",
+            "error_description": "该申请已被其他 request_id 兑换，不能再次消费",
+            "exit_code": 2
+          },
+          "index": 5,
+          "op": "worker",
+          "passed": true
+        },
+        {
+          "actual": {
+            "client_id": "term-client-8",
+            "exit_code": 0,
+            "issued_at": 1000030,
+            "request_id": "req-proc-A",
+            "result": "replay",
+            "scope": "read",
+            "status": "consumed",
+            "token": "lat_TS2GXv5sbS0Hz9cYl3LIYo8Y8HcBG6ntOdggPjBnuq0",
+            "token_type": "Bearer"
+          },
+          "index": 6,
+          "op": "worker",
+          "passed": true
+        },
+        {
+          "actual": {
+            "checked": true,
+            "leaks": 0
+          },
+          "index": 7,
+          "op": "assert_log_no_secrets",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "input": "D:\\my-workspace\\ai-workspace\\zhongqiang\\CC_Codex 用户反馈标注(领域专项)项目\\选题\\032_设备授权登录中的轮询节流与消费幂等\\作答工作区_uid12721-identity-20261117-074832-r1\\cases\\cases.json",
+  "passed": true,
+  "passed_cases": 8,
+  "seed": 20261117,
+  "start_time": 1000000,
+  "total_cases": 8
+}
